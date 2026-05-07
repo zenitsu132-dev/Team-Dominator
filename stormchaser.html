@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Team Dominator | Roblox Server</title>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600&family=VT323&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --sky:    #0a1628;
+      --deep:   #060d1a;
+      --green:  #39ff8f;
+      --amber:  #ffaa00;
+      --red:    #ff3d3d;
+      --teal:   #00d4ff;
+      --storm:  #1e3a5f;
+      --text:   #b8cce0;
+      --muted:  #4a6080;
+      --panel:  rgba(255,255,255,0.03);
+      --border: rgba(0,212,255,0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--deep);
+      color: var(--text);
+      font-family: 'Archivo', sans-serif;
+      font-size: 16px;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* ═══ RAIN CANVAS ═══ */
+    #rain-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: 0.18;
+    }
+
+    /* ═══ LIGHTNING FLASH ═══ */
+    .lightning {
+      position: fixed;
+      inset: 0;
+      background: rgba(180,220,255,0.15);
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+      animation: lightningStrike 8s infinite;
+    }
+    @keyframes lightningStrike {
+      0%,94%,100% { opacity:0; }
+      95%          { opacity:1; }
+      96%          { opacity:0; }
+      97%          { opacity:0.7; }
+      98%          { opacity:0; }
+    }
+
+    /* ═══ NAV ═══ */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 48px;
+      background: rgba(6,13,26,0.9);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+      color: white;
+    }
+    .logo-icon {
+      width: 32px; height: 32px;
+      background: var(--green);
+      clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+      animation: spin 20s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .nav-status {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      color: var(--green);
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--muted);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--teal); }
+
+    /* ═══ HERO ═══ */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+      padding: 120px 24px 80px;
+    }
+
+    /* Radar sweep background */
+    .radar-bg {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+    .radar-circle {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid;
+    }
+    .radar-circle:nth-child(1) { width:200px; height:200px; border-color:rgba(57,255,143,0.15); }
+    .radar-circle:nth-child(2) { width:400px; height:400px; border-color:rgba(57,255,143,0.1); }
+    .radar-circle:nth-child(3) { width:600px; height:600px; border-color:rgba(57,255,143,0.07); }
+    .radar-circle:nth-child(4) { width:900px; height:900px; border-color:rgba(57,255,143,0.05); }
+    .radar-circle:nth-child(5) { width:1200px; height:1200px; border-color:rgba(57,255,143,0.03); }
+
+    .radar-sweep {
+      position: absolute;
+      width: 600px; height: 600px;
+      border-radius: 50%;
+      overflow: hidden;
+      animation: radarSpin 4s linear infinite;
+    }
+    .radar-sweep::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 300px; height: 300px;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(57,255,143,0.2) 30deg, transparent 90deg);
+      transform-origin: 0 0;
+    }
+    @keyframes radarSpin { to { transform: rotate(360deg); } }
+
+    .radar-crosshair {
+      position: absolute;
+      width: 600px; height: 600px;
+    }
+    .radar-crosshair::before,
+    .radar-crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(57,255,143,0.08);
+    }
+    .radar-crosshair::before { top:50%; left:0; right:0; height:1px; }
+    .radar-crosshair::after  { left:50%; top:0; bottom:0; width:1px; }
+
+    /* Gradient overlay on radar */
+    .radar-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 50% 60% at 50% 60%, transparent 20%, var(--deep) 80%),
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(10,22,40,0.9) 0%, transparent 60%);
+      z-index: 2;
+    }
+
+    .hero-content { position: relative; z-index: 3; max-width: 860px; }
+
+    .alert-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,61,61,0.12);
+      border: 1px solid rgba(255,61,61,0.4);
+      color: var(--red);
+      font-family: 'VT323', monospace;
+      font-size: 17px;
+      letter-spacing: 3px;
+      padding: 6px 18px;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s ease both;
+    }
+    .alert-pulse {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--red);
+      box-shadow: 0 0 8px var(--red);
+      animation: blink 0.8s ease-in-out infinite;
+    }
+
+    h1 {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: clamp(56px, 12vw, 130px);
+      line-height: 0.87;
+      letter-spacing: -2px;
+      color: white;
+      animation: fadeUp 0.8s 0.1s ease both;
+      position: relative;
+    }
+    h1 em {
+      font-style: normal;
+      color: transparent;
+      -webkit-text-stroke: 2px var(--teal);
+      display: block;
+    }
+    h1 strong {
+      color: var(--green);
+      display: block;
+    }
+
+    .hero-tag {
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 24px 0 44px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    /* Tornado SVG icon */
+    .tornado-icon {
+      display: flex; justify-content: center;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s 0.15s ease both;
+    }
+
+    .cta-row {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Archivo', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      padding: 14px 32px;
+      border: 1px solid;
+      cursor: crosshair;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.25s ease;
+    }
+    .btn:hover::after { transform: scaleX(1); }
+    .btn span { position: relative; z-index: 1; }
+
+    .btn-green { border-color: var(--green); color: var(--green); }
+    .btn-green::after { background: var(--green); }
+    .btn-green:hover { color: var(--deep); }
+
+    .btn-teal { border-color: var(--teal); color: var(--teal); }
+    .btn-teal::after { background: var(--teal); }
+    .btn-teal:hover { color: var(--deep); }
+
+    .btn-amber { border-color: var(--amber); color: var(--amber); }
+    .btn-amber::after { background: var(--amber); }
+    .btn-amber:hover { color: var(--deep); }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(28px); }
+      to   { opacity:1; transform:none; }
+    }
+
+    /* ═══ WEATHER TICKER ═══ */
+    .ticker-wrap {
+      position: relative;
+      z-index: 10;
+      background: rgba(57,255,143,0.06);
+      border-top: 1px solid rgba(57,255,143,0.2);
+      border-bottom: 1px solid rgba(57,255,143,0.2);
+      overflow: hidden;
+      padding: 10px 0;
+    }
+    .ticker-label {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      background: var(--green);
+      color: var(--deep);
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      z-index: 2;
+    }
+    .ticker-inner {
+      display: flex;
+      animation: ticker 30s linear infinite;
+      white-space: nowrap;
+      padding-left: 100px;
+    }
+    .ticker-inner span {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      letter-spacing: 1px;
+      color: var(--green);
+      padding: 0 40px;
+    }
+    .ticker-inner span::before { content: '⚡ '; }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* ═══ SECTIONS ═══ */
+    .section-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+
+    .label {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: clamp(36px, 6vw, 72px);
+      line-height: 0.92;
+      color: white;
+      letter-spacing: -1px;
+      margin-bottom: 48px;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      opacity: 0.2;
+      margin: 0 40px;
+    }
+
+    /* ═══ ABOUT ═══ */
+    #about { display: grid; grid-template-columns: 1.2fr 1fr; gap: 80px; align-items: center; }
+
+    .about-text p {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--text);
+      margin-bottom: 18px;
+    }
+
+    /* Animated storm cell */
+    .storm-visual {
+      position: relative;
+      height: 340px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .storm-cell {
+      position: relative;
+      width: 180px; height: 180px;
+    }
+    .cell-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: cellPulse 3s ease-in-out infinite;
+    }
+    .cell-ring:nth-child(1) { width:60px; height:60px; border-color:rgba(255,61,61,0.8); background:rgba(255,61,61,0.1); animation-delay:0s; }
+    .cell-ring:nth-child(2) { width:110px; height:110px; border-color:rgba(255,170,0,0.5); animation-delay:0.3s; }
+    .cell-ring:nth-child(3) { width:160px; height:160px; border-color:rgba(57,255,143,0.3); animation-delay:0.6s; }
+    .cell-ring:nth-child(4) { width:220px; height:220px; border-color:rgba(0,212,255,0.15); animation-delay:0.9s; }
+    .cell-ring:nth-child(5) { width:290px; height:290px; border-color:rgba(0,212,255,0.08); animation-delay:1.2s; }
+    @keyframes cellPulse {
+      0%,100% { transform:translate(-50%,-50%) scale(1); opacity:0.8; }
+      50%      { transform:translate(-50%,-50%) scale(1.05); opacity:1; }
+    }
+    .cell-label {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'VT323', monospace;
+      font-size: 13px;
+      color: var(--red);
+      letter-spacing: 2px;
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    /* ═══ ALERT LEVELS ═══ */
+    #levels { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+    }
+    .level-card {
+      padding: 36px 28px;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+      transition: transform 0.2s;
+    }
+    .level-card:hover { transform: translateY(-6px); z-index: 2; }
+
+    .level-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.08;
+    }
+    .level-card.green::before { background: var(--green); }
+    .level-card.yellow::before { background: var(--amber); }
+    .level-card.orange::before { background: #ff6600; }
+    .level-card.red::before { background: var(--red); }
+
+    .level-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .level-card.green::after { background: var(--green); }
+    .level-card.yellow::after { background: var(--amber); }
+    .level-card.orange::after { background: #ff6600; }
+    .level-card.red::after { background: var(--red); }
+
+    .level-icon { font-size: 36px; margin-bottom: 16px; display: block; }
+    .level-name {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .level-card.green .level-name { color: var(--green); }
+    .level-card.yellow .level-name { color: var(--amber); }
+    .level-card.orange .level-name { color: #ff6600; }
+    .level-card.red .level-name { color: var(--red); }
+
+    .level-wind {
+      font-family: 'VT323', monospace;
+      font-size: 28px;
+      color: white;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .level-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .level-bg-num {
+      position: absolute;
+      bottom: -10px; right: 10px;
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 100px;
+      opacity: 0.04;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    /* ═══ RULES ═══ */
+    #rules { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+    .rules-list { display: flex; flex-direction: column; gap: 2px; }
+    .rule-row {
+      display: grid;
+      grid-template-columns: 64px 1fr auto;
+      align-items: center;
+      gap: 24px;
+      padding: 24px 32px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, background 0.2s;
+      cursor: crosshair;
+    }
+    .rule-row:hover {
+      border-color: rgba(57,255,143,0.25);
+      background: rgba(57,255,143,0.03);
+    }
+    .rule-num-big {
+      font-family: 'VT323', monospace;
+      font-size: 36px;
+      color: var(--green);
+      opacity: 0.5;
+    }
+    .rule-text h3 {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 16px;
+      color: white;
+      margin-bottom: 4px;
+    }
+    .rule-text p { font-size: 14px; color: var(--muted); }
+    .rule-severity {
+      font-family: 'VT323', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 4px 12px;
+      border: 1px solid;
+    }
+    .sev-warn { border-color: var(--amber); color: var(--amber); }
+    .sev-kick { border-color: #ff6600; color: #ff6600; }
+    .sev-ban  { border-color: var(--red); color: var(--red); }
+
+    /* ═══ ROLES ═══ */
+    #roles { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+    .roles-track {
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+    .roles-track::-webkit-scrollbar { height: 2px; }
+    .roles-track::-webkit-scrollbar-thumb { background: var(--teal); }
+
+    .role-card {
+      min-width: 200px;
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .role-card:hover { border-color: rgba(0,212,255,0.3); }
+    .role-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--teal), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .role-card:hover::before { opacity: 1; }
+
+    .role-emoji { font-size: 40px; margin-bottom: 14px; display: block; }
+    .role-title {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 15px;
+      color: white;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .role-xp {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--teal);
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    .role-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+    /* XP Bar */
+    .xp-bar-wrap { margin-top: 14px; background: rgba(255,255,255,0.05); height: 3px; border-radius: 2px; }
+    .xp-bar { height: 100%; background: var(--teal); border-radius: 2px; transition: width 1s ease; }
+
+    /* ═══ STAFF ═══ */
+    #staff { max-width: 1100px; margin: 0 auto; padding: 100px 40px; }
+    .staff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .staff-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 28px 20px;
+      text-align: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .staff-card:hover { transform: translateY(-5px); border-color: rgba(57,255,143,0.3); }
+    .staff-icon { font-size: 36px; margin-bottom: 12px; display: block; }
+    .staff-tag {
+      font-family: 'VT323', monospace;
+      font-size: 13px;
+      letter-spacing: 3px;
+      margin-bottom: 4px;
+    }
+    .tag-owner { color: var(--green); }
+    .tag-admin { color: var(--amber); }
+    .tag-mod   { color: var(--teal); }
+    .staff-name {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 17px;
+      color: white;
+    }
+
+    /* ═══ JOIN ═══ */
+    #join { max-width: 1100px; margin: 0 auto; padding: 80px 40px 120px; }
+    .join-box {
+      position: relative;
+      overflow: hidden;
+      padding: 80px 56px;
+      border: 1px solid rgba(57,255,143,0.2);
+      text-align: center;
+    }
+    .join-box::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 60% at 50% 50%, rgba(57,255,143,0.05) 0%, transparent 70%);
+    }
+    .join-box h2 { position: relative; z-index: 1; }
+    .join-box p { position: relative; z-index: 1; color: var(--muted); margin-bottom: 40px; font-size: 17px; }
+    .join-box .cta-row { position: relative; z-index: 1; }
+
+    /* Animated corner brackets */
+    .corner { position: absolute; width: 24px; height: 24px; }
+    .corner::before, .corner::after { content: ''; position: absolute; background: var(--green); }
+    .corner::before { width: 100%; height: 1px; }
+    .corner::after  { width: 1px; height: 100%; }
+    .corner.tl { top:16px; left:16px; }
+    .corner.tr { top:16px; right:16px; transform: scaleX(-1); }
+    .corner.bl { bottom:16px; left:16px; transform: scaleY(-1); }
+    .corner.br { bottom:16px; right:16px; transform: scale(-1); }
+
+    /* ═══ FOOTER ═══ */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-brand {
+      font-family: 'Archivo Black', sans-serif;
+      font-size: 16px;
+      color: white;
+    }
+    .footer-brand span { color: var(--green); }
+    footer p {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ═══ REVEAL ═══ */
+    .reveal { opacity:0; transform:translateY(24px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity:1; transform:none; }
+
+    /* ═══ RESPONSIVE ═══ */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      #about { grid-template-columns: 1fr; gap: 40px; }
+      .storm-visual { height: 220px; }
+      .levels-grid { grid-template-columns: 1fr 1fr; }
+      .section-wrap, #levels, #rules, #roles, #staff, #join { padding: 60px 20px; }
+      .rule-row { grid-template-columns: 48px 1fr; }
+      .rule-severity { display: none; }
+      footer { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="rain-canvas"></canvas>
+<div class="lightning"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-icon"></div>
+    TEAM DOMINATOR
+  </div>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    SERVER ACTIVE · 12 ONLINE
+  </div>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#levels">Alerts</a></li>
+    <li><a href="#rules">Rules</a></li>
+    <li><a href="#roles">Roles</a></li>
+    <li><a href="#staff">Staff</a></li>
+    <li><a href="#join">Join</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div id="hero">
+  <div class="radar-bg">
+    <div class="radar-circle"></div>
+    <div class="radar-circle"></div>
+    <div class="radar-circle"></div>
+    <div class="radar-circle"></div>
+    <div class="radar-circle"></div>
+    <div class="radar-sweep"></div>
+    <div class="radar-crosshair"></div>
+  </div>
+  <div class="radar-overlay"></div>
+  <div class="hero-content">
+    <div class="alert-badge"><div class="alert-pulse"></div> TORNADO WARNING IN EFFECT</div>
+    <div class="tornado-icon">
+      <svg width="60" height="80" viewBox="0 0 60 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="30" cy="8" rx="28" ry="8" fill="none" stroke="#39ff8f" stroke-width="1.5" opacity="0.8"/>
+        <ellipse cx="30" cy="22" rx="22" ry="6" fill="none" stroke="#39ff8f" stroke-width="1.2" opacity="0.65"/>
+        <ellipse cx="30" cy="36" rx="16" ry="5" fill="none" stroke="#00d4ff" stroke-width="1.2" opacity="0.55"/>
+        <ellipse cx="30" cy="50" rx="10" ry="4" fill="none" stroke="#ffaa00" stroke-width="1.2" opacity="0.5"/>
+        <ellipse cx="30" cy="62" rx="5" ry="3" fill="none" stroke="#ff3d3d" stroke-width="1.2" opacity="0.6"/>
+        <line x1="30" y1="65" x2="30" y2="78" stroke="#ff3d3d" stroke-width="1.5" opacity="0.8"/>
+        <line x1="2" y1="8" x2="58" y2="8" stroke="#39ff8f" stroke-width="1" opacity="0.3"/>
+      </svg>
+    </div>
+    <h1>
+      <em>TEAM</em>
+      <strong>DOMINATOR</strong>
+    </h1>
+    <p class="hero-tag">Roblox Private Server · Pick a Side. Dominate the Storm.</p>
+    <div class="cta-row">
+      <a href="#join" class="btn btn-green"><span>🌪️ Play Now</span></a>
+      <a href="#rules" class="btn btn-teal"><span>📡 Server Rules</span></a>
+      <a href="#join" class="btn btn-amber"><span>💬 Discord</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-label">ALERTS</div>
+  <div class="ticker-inner">
+    <span>TORNADO WARNING — ACTIVE</span>
+    <span>EF5 CONFIRMED NEAR SERVER HQ</span>
+    <span>WIND SPEEDS 200+ MPH</span>
+    <span>HAIL SIZE: BASEBALL</span>
+    <span>STORM MOTION: NE AT 55 MPH</span>
+    <span>MESOCYCLONE ROTATION DETECTED</span>
+    <span>SEEK SHELTER IMMEDIATELY</span>
+    <span>TORNADO WARNING — ACTIVE</span>
+    <span>EF5 CONFIRMED NEAR SERVER HQ</span>
+    <span>WIND SPEEDS 200+ MPH</span>
+    <span>HAIL SIZE: BASEBALL</span>
+    <span>STORM MOTION: NE AT 55 MPH</span>
+    <span>MESOCYCLONE ROTATION DETECTED</span>
+    <span>SEEK SHELTER IMMEDIATELY</span>
+  </div>
+</div>
+
+<div class="divider" style="margin-top:0;"></div>
+
+<!-- ABOUT -->
+<div class="section-wrap">
+  <div id="about">
+    <div class="about-text reveal">
+      <div class="label">// What is this?</div>
+      <h2>Dominate the Storm.<br>Beat the Odds.</h2>
+      <p>Team Dominator is a Roblox private server set in a storm-ravaged world. Two teams battle for control of the map while tornadoes, hail, and lightning bear down on both sides.</p>
+      <p>Earn XP for every chase, unlock new vehicles and roles, and climb from <strong style="color:var(--green)">Rookie Spotter</strong> all the way to <strong style="color:var(--red)">EF5 Elite</strong>.</p>
+      <p>Weather events are live and procedurally driven — no two storms are the same. Can you survive a direct hit?</p>
+    </div>
+    <div class="storm-visual reveal">
+      <div class="storm-cell">
+        <div class="cell-ring"></div>
+        <div class="cell-ring"></div>
+        <div class="cell-ring"></div>
+        <div class="cell-ring"></div>
+        <div class="cell-ring"></div>
+        <div class="cell-label">⚠️<br>MESO</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ALERT LEVELS -->
+<div id="levels">
+  <div style="text-align:center; margin-bottom:56px;" class="reveal">
+    <div class="label">// Tornado Scale</div>
+    <h2>Know Your Storm</h2>
+  </div>
+  <div class="levels-grid reveal">
+    <div class="level-card green">
+      <span class="level-bg-num">EF1</span>
+      <span class="level-icon">🌬️</span>
+      <div class="level-name">EF1 — WEAK</div>
+      <div class="level-wind">65–110 MPH</div>
+      <div class="level-desc">Minor damage. Branches snapped, light debris. Great conditions for new players to get into the action.</div>
+    </div>
+    <div class="level-card yellow">
+      <span class="level-bg-num">EF2</span>
+      <span class="level-icon">🌩️</span>
+      <div class="level-name">EF2 — STRONG</div>
+      <div class="level-wind">111–165 MPH</div>
+      <div class="level-desc">Significant damage. Cars overturned. Requires experienced players and good team coordination.</div>
+    </div>
+    <div class="level-card orange">
+      <span class="level-bg-num">EF3</span>
+      <span class="level-icon">🌀</span>
+      <div class="level-name">EF3 — SEVERE</div>
+      <div class="level-wind">136–165 MPH</div>
+      <div class="level-desc">Extreme damage. Walls collapse. Only veteran players attempt to dominate zones in these conditions.</div>
+    </div>
+    <div class="level-card red">
+      <span class="level-bg-num">EF5</span>
+      <span class="level-icon">☠️</span>
+      <div class="level-name">EF5 — VIOLENT</div>
+      <div class="level-wind">200+ MPH</div>
+      <div class="level-desc">Total destruction. Rare and terrifying. Only EF5 Elite rank players can survive close intercepts.</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- RULES -->
+<div id="rules">
+  <div style="margin-bottom:48px;" class="reveal">
+    <div class="label">// Server Rules</div>
+    <h2>Server Conduct</h2>
+  </div>
+  <div class="rules-list reveal">
+    <div class="rule-row">
+      <div class="rule-num-big">01</div>
+      <div class="rule-text">
+        <h3>No Exploiting or Hacking</h3>
+        <p>Any unauthorized scripts, speed hacks, or weather manipulation exploits result in a permanent ban.</p>
+      </div>
+      <div class="rule-severity sev-ban">PERMA BAN</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num-big">02</div>
+      <div class="rule-text">
+        <h3>Respect All Players</h3>
+        <p>No slurs, harassment, or targeted griefing. Competitive trash talk is fine; bullying is not.</p>
+      </div>
+      <div class="rule-severity sev-warn">WARNING</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num-big">03</div>
+      <div class="rule-text">
+        <h3>Don't Block Storm Paths</h3>
+        <p>Intentionally blocking other players from zones or griefing their team's progress is unsportsmanlike.</p>
+      </div>
+      <div class="rule-severity sev-kick">KICK</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num-big">04</div>
+      <div class="rule-text">
+        <h3>Obey Staff Decisions</h3>
+        <p>Staff calls are final during active sessions. Disputes go in the ticket channel, not public chat.</p>
+      </div>
+      <div class="rule-severity sev-kick">KICK</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num-big">05</div>
+      <div class="rule-text">
+        <h3>Stay In Character (SIC)</h3>
+        <p>This is a Team Dominator server. Keep chat focused and use team comms during active rounds.</p>
+      </div>
+      <div class="rule-severity sev-warn">WARNING</div>
+    </div>
+    <div class="rule-row">
+      <div class="rule-num-big">06</div>
+      <div class="rule-text">
+        <h3>Have Fun & Stay Safe</h3>
+        <p>It's a game. Chase hard, compete fairly, and enjoy the ride — even when the storm wins.</p>
+      </div>
+      <div class="rule-severity" style="border-color:var(--green);color:var(--green);">ALWAYS</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ROLES -->
+<div id="roles">
+  <div style="margin-bottom:48px;" class="reveal">
+    <div class="label">// Rank Progression</div>
+    <h2>Player Ranks</h2>
+  </div>
+  <div class="roles-track reveal">
+    <div class="role-card">
+      <span class="role-emoji">🌤️</span>
+      <div class="role-title">ROOKIE SPOTTER</div>
+      <div class="role-xp">0 – 500 XP</div>
+      <div class="role-desc">Just starting out. Learn the basics and report storms from a safe distance.</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:20%"></div></div>
+    </div>
+    <div class="role-card">
+      <span class="role-emoji">🌦️</span>
+      <div class="role-title">FIELD AGENT</div>
+      <div class="role-xp">500 – 2K XP</div>
+      <div class="role-desc">Cleared for active rounds. Hold zones and rack up early points for your team.</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:40%"></div></div>
+    </div>
+    <div class="role-card">
+      <span class="role-emoji">🌀</span>
+      <div class="role-title">STORM INTERCEPT</div>
+      <div class="role-xp">2K – 6K XP</div>
+      <div class="role-desc">Advanced player with upgraded gear access and the ability to push deep into contested zones.</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:60%"></div></div>
+    </div>
+    <div class="role-card">
+      <span class="role-emoji">⛈️</span>
+      <div class="role-title">VORTEX HUNTER</div>
+      <div class="role-xp">6K – 15K XP</div>
+      <div class="role-desc">Elite rank. Can lead chase teams and coordinate multi-vehicle intercepts.</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:80%"></div></div>
+    </div>
+    <div class="role-card">
+      <span class="role-emoji">☠️</span>
+      <div class="role-title">EF5 ELITE</div>
+      <div class="role-xp">15K+ XP</div>
+      <div class="role-desc">Legendary. Survives direct EF5 hits. Exclusive TIV vehicle and red nameplate.</div>
+      <div class="xp-bar-wrap"><div class="xp-bar" style="width:100%; background:var(--red);"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- STAFF -->
+<div id="staff">
+  <div style="margin-bottom:48px;" class="reveal">
+    <div class="label">// The Team</div>
+    <h2>Server Staff</h2>
+  </div>
+  <div class="staff-grid reveal">
+    <div class="staff-card">
+      <span class="staff-icon">🌪️</span>
+      <div class="staff-tag tag-owner">FOUNDER</div>
+      <div class="staff-name">YourName</div>
+    </div>
+    <div class="staff-card">
+      <span class="staff-icon">⛈️</span>
+      <div class="staff-tag tag-owner">CO-OWNER</div>
+      <div class="staff-name">CoOwner</div>
+    </div>
+    <div class="staff-card">
+      <span class="staff-icon">📡</span>
+      <div class="staff-tag tag-admin">ADMIN</div>
+      <div class="staff-name">Admin1</div>
+    </div>
+    <div class="staff-card">
+      <span class="staff-icon">🔵</span>
+      <div class="staff-tag tag-mod">MODERATOR</div>
+      <div class="staff-name">Mod1</div>
+    </div>
+    <div class="staff-card">
+      <span class="staff-icon">🔵</span>
+      <div class="staff-tag tag-mod">MODERATOR</div>
+      <div class="staff-name">Mod2</div>
+    </div>
+  </div>
+  <p style="margin-top:28px; font-family:'VT323',monospace; font-size:15px; color:var(--muted); letter-spacing:1px;">
+    // Want to join the staff team? Open a ticket in Discord.
+  </p>
+</div>
+
+<div class="divider"></div>
+
+<!-- JOIN -->
+<div id="join">
+  <div class="join-box reveal">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div class="label">// Ready to Chase?</div>
+    <h2>Get In the Storm</h2>
+    <p>Click your vehicle, tune your radio, and floor it toward the funnel. The storm is already forming.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-green"><span>🎮 Play on Roblox</span></a>
+      <a href="#" class="btn btn-teal"><span>💬 Join Discord</span></a>
+      <a href="#" class="btn btn-amber"><span>📢 Follow Updates</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand"><span>TEAM</span> DOMINATOR</div>
+  <p>A Roblox Private Server · Not affiliated with Roblox or the Twisted game developers</p>
+  <p>© 2025 Team Dominator Server</p>
+</footer>
+
+<script>
+  // ── Rain Canvas ──
+  const canvas = document.getElementById('rain-canvas');
+  const ctx = canvas.getContext('2d');
+  let drops = [];
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function initDrops() {
+    drops = [];
+    const count = Math.floor(window.innerWidth / 4);
+    for (let i = 0; i < count; i++) {
+      drops.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        len: Math.random() * 18 + 8,
+        speed: Math.random() * 6 + 8,
+        opacity: Math.random() * 0.5 + 0.1
+      });
+    }
+  }
+
+  function drawRain() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = '#00d4ff';
+    ctx.lineWidth = 0.5;
+    drops.forEach(d => {
+      ctx.globalAlpha = d.opacity;
+      ctx.beginPath();
+      ctx.moveTo(d.x, d.y);
+      ctx.lineTo(d.x - 1, d.y + d.len);
+      ctx.stroke();
+      d.y += d.speed;
+      d.x -= 0.5;
+      if (d.y > canvas.height) {
+        d.y = -d.len;
+        d.x = Math.random() * canvas.width;
+      }
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(drawRain);
+  }
+
+  resizeCanvas();
+  initDrops();
+  drawRain();
+  window.addEventListener('resize', () => { resizeCanvas(); initDrops(); });
+
+  // ── Scroll Reveal ──
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  reveals.forEach(r => observer.observe(r));
+
+  // ── XP bars animate on scroll ──
+  const bars = document.querySelectorAll('.xp-bar');
+  const barObserver = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.width = e.target.style.width;
+        barObserver.unobserve(e.target);
+      }
+    });
+  });
+  bars.forEach(b => {
+    const w = b.style.width;
+    b.style.width = '0%';
+    setTimeout(() => b.style.width = w, 400);
+    barObserver.observe(b);
+  });
+</script>
+</body>
+</html>
